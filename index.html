@@ -283,7 +283,7 @@ function renderBank(body){
   (bank.offline?'<div style="margin:10px 0;padding:10px;border-radius:10px;background:#fff8e9;border:1px solid #e5cf99;font-size:12px">وضع مؤقت: يعمل الاختبار الآن من الموقع، وتحفظ النتيجة على هذا الجهاز حتى تعود قاعدة البيانات</div>':'')+
   (pending?'<div style="text-align:center;font-size:11px;color:#765a22;margin-bottom:8px">محاولات بانتظار المزامنة: '+pending+'</div>':'');
   bank.questions.forEach((q,i)=>{
-    const d=document.createElement("div"); d.className="question"; d.style.marginBottom="12px";
+    const d=document.createElement("div"); d.className="question"; d.dataset.qid=q.id; d.style.marginBottom="12px";
     d.innerHTML='<h3>'+(i+1)+'. '+esc(q.question_text)+'</h3><div class="options">'+["a","b","c","d"].map(x=>
     '<label class="option"><input type="radio" name="q'+q.id+'" value="'+x.toUpperCase()+'"> '+x.toUpperCase()+'. '+esc(q["option_"+x])+'</label>').join("")+'</div>';
     d.querySelectorAll("input").forEach(inp=>inp.onchange=()=>bank.answers[q.id]=inp.value);
@@ -296,31 +296,119 @@ function renderBank(body){
 async function submitBank(){
   const qs=bank.questions;
   if(qs.some(q=>!bank.answers[q.id])) return alert("يرجى الإجابة عن جميع الأسئلة");
-  let score=0; qs.forEach(q=>{if(bank.answers[q.id]===q.correct_answer) score++});
+
+  let score=0;
+  qs.forEach(q=>{ if(bank.answers[q.id]===q.correct_answer) score++; });
   const percentage=Math.round(score/qs.length*100);
-  const attempt={test_id:bank.test.id,score,total_questions:qs.length,percentage,session_id:"web-"+Date.now()};
-  const responses=qs.map(q=>({question_id:q.id,selected_answer:bank.answers[q.id],is_correct:bank.answers[q.id]===q.correct_answer}));
+
+  const attempt={
+    test_id:bank.test.id,
+    score,
+    total_questions:qs.length,
+    percentage,
+    session_id:"web-"+Date.now()
+  };
+
+  const responses=qs.map(q=>({
+    question_id:q.id,
+    selected_answer:bank.answers[q.id],
+    is_correct:bank.answers[q.id]===q.correct_answer
+  }));
+
   let savedOnline=true;
   try{
     const a=(await sb("attempts",{method:"POST",body:JSON.stringify(attempt)}))[0];
-    await sb("responses",{method:"POST",body:JSON.stringify(responses.map(r=>({...r,attempt_id:a.id})))});
+    await sb("responses",{
+      method:"POST",
+      body:JSON.stringify(responses.map(r=>({...r,attempt_id:a.id})))
+    });
   }catch(e){
     savedOnline=false;
-    const p=getPending(); p.push({attempt,responses,saved_at:new Date().toISOString()}); setPending(p);
+    const p=getPending();
+    p.push({attempt,responses,saved_at:new Date().toISOString()});
+    setPending(p);
   }
-  const wrong = qs.filter(q => bank.answers[q.id] !== q.correct_answer);
-  const review = wrong.length
-    ? '<div style="margin-top:20px;text-align:right"><div style="font-weight:800;margin-bottom:10px">مراجعة الإجابات غير الصحيحة</div>' +
-      wrong.map((q,idx)=>'<div style="padding:12px 0;border-top:1px solid #ddd"><div style="font-weight:700">'+(idx+1)+'. '+esc(q.question_text)+'</div><div style="margin-top:6px">إجابتك: <b>'+esc(bank.answers[q.id])+'</b></div><div>الإجابة الصحيحة: <b>'+esc(q.correct_answer)+'</b></div></div>').join('') +
-      '</div>'
-    : '<div style="margin-top:20px;font-weight:800;color:var(--teal)">جميع الإجابات صحيحة</div>';
-  document.querySelector("#bankModal .bank-body").innerHTML=
-  '<div style="text-align:center;padding:30px"><b>تم إنهاء الاختبار</b><div style="font-size:42px;color:var(--teal);margin:12px">'+score+'/'+qs.length+
-  '</div><div style="font-size:18px;font-weight:800">'+percentage+'%</div><div style="margin-top:12px;font-size:12px">'+
-  (savedOnline?'تم حفظ النتيجة في قاعدة البيانات':'تم حفظ النتيجة مؤقتًا على هذا الجهاز وستتم مزامنتها تلقائيًا عند عودة الاتصال')+
-  '</div>'+review+'</div>';
-}
 
+  const body=document.querySelector("#bankModal .bank-body");
+
+  // Keep the same question cards and the student's selected answers.
+  qs.forEach(q=>{
+    const card=body.querySelector('.question[data-qid="'+q.id+'"]');
+    if(!card) return;
+
+    const selected=bank.answers[q.id];
+    const correct=q.correct_answer;
+
+    card.querySelectorAll('label.option').forEach(label=>{
+      const input=label.querySelector('input');
+      if(!input) return;
+
+      input.disabled=true;
+      const value=input.value;
+
+      // Reset/neutral base.
+      label.style.border='1px solid #d8dee8';
+      label.style.background='#ffffff';
+      label.style.color='#20324a';
+      label.style.borderRadius='14px';
+      label.style.padding='12px 14px';
+      label.style.position='relative';
+
+      // Remove old status mark if any.
+      const old=label.querySelector('.answer-status-mark');
+      if(old) old.remove();
+
+      if(value===correct){
+        // Correct answer: full option highlighted green.
+        label.style.background='#eaf7ef';
+        label.style.border='2px solid #34a853';
+        label.style.color='#166534';
+
+        const mark=document.createElement('span');
+        mark.className='answer-status-mark';
+        mark.textContent=(value===selected) ? '✔ إجابتك الصحيحة' : '✔ الإجابة الصحيحة';
+        mark.style.cssText='font-weight:900;color:#15803d;margin-inline-start:10px;white-space:nowrap';
+        label.appendChild(mark);
+      }
+
+      if(value===selected && selected!==correct){
+        // Student's wrong answer: keep selected and highlight full option red.
+        label.style.background='#fdecec';
+        label.style.border='2px solid #d93025';
+        label.style.color='#a61b1b';
+
+        const mark=document.createElement('span');
+        mark.className='answer-status-mark';
+        mark.textContent='✖ إجابتك';
+        mark.style.cssText='font-weight:900;color:#c62828;margin-inline-start:10px;white-space:nowrap';
+        label.appendChild(mark);
+      }
+    });
+  });
+
+  // Remove only the submit button; keep all questions exactly where they are.
+  const submitBtn=[...body.querySelectorAll('button')].find(b=>b.textContent.includes('إنهاء الاختبار'));
+  if(submitBtn) submitBtn.remove();
+
+  // Insert a concise result summary above the same question page.
+  const previous=body.querySelector('#resultSummary');
+  if(previous) previous.remove();
+
+  const summary=document.createElement('div');
+  summary.id='resultSummary';
+  summary.style.cssText='margin:0 0 18px;padding:18px;border-radius:20px;background:#f7fbfc;border:1px solid #dbe7ef;text-align:center;box-shadow:0 6px 18px rgba(15,39,71,.06)';
+  summary.innerHTML=
+    '<div style="font-weight:900;color:#0f2747;font-size:18px">نتيجة الاختبار</div>'+
+    '<div style="font-size:42px;font-weight:900;color:var(--teal);margin:8px 0">'+score+'/'+qs.length+'</div>'+
+    '<div style="font-size:18px;font-weight:900;color:#0f2747">'+percentage+'%</div>'+
+    '<div style="margin-top:8px;font-size:12px;color:#667085">'+
+      (savedOnline ? 'تم حفظ النتيجة في قاعدة البيانات' : 'تم حفظ النتيجة مؤقتًا على هذا الجهاز وستتم مزامنتها عند عودة الاتصال')+
+    '</div>'+
+    '<div style="margin-top:12px;font-size:12px;color:#475467">الأخضر = الإجابة الصحيحة، الأحمر = إجابتك الخاطئة</div>';
+
+  body.insertBefore(summary, body.firstChild);
+  body.scrollTop=0;
+}
 document.getElementById("openBank").onclick=openBank;
 document.getElementById("closeBank").onclick=()=>document.getElementById("bankModal").classList.remove("open");
 document.getElementById("bankModal").addEventListener("click",e=>{if(e.target.id==="bankModal") e.currentTarget.classList.remove("open")});
