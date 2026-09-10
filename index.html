@@ -173,18 +173,18 @@ footer{background:var(--navy);color:#dce8e8;text-align:center;padding:19px;font-
    <h2 class="title">الإحصائيات وقياس الأثر</h2>
    <p class="subtitle">قراءة موجزة لمؤشرات الأداء في البنك الرقمي</p>
    <div class="kpis">
-    <div class="kpi"><small>إجمالي المحاولات</small><b>0</b></div>
-    <div class="kpi"><small>متوسط الأداء</small><b>0%</b></div>
-    <div class="kpi"><small>أعلى نتيجة</small><b>0%</b></div>
-    <div class="kpi"><small>نسبة التحسن</small><b>0%</b></div>
+    <div class="kpi"><small>إجمالي المحاولات</small><b id="kpiAttempts">0</b></div>
+    <div class="kpi"><small>متوسط الأداء</small><b id="kpiAverage">0%</b></div>
+    <div class="kpi"><small>أعلى نتيجة</small><b id="kpiHighest">0%</b></div>
+    <div class="kpi"><small>نسبة التحسن</small><b id="kpiImprovement">—</b></div>
    </div>
    <div class="chart">
     <div class="chart-head">الأداء حسب محتوى الاختبار</div>
     <div class="bars">
-     <div class="bar" style="--h:42%"><span>Present Simple</span></div>
-     <div class="bar" style="--h:55%"><span>Present Progressive</span></div>
-     <div class="bar" style="--h:67%"><span>Present Perfect</span></div>
-     <div class="bar" style="--h:48%"><span>Past Simple</span></div>
+     <div class="bar" id="barPresentSimple" style="--h:0%"><span>Present Simple</span></div>
+     <div class="bar" id="barPresentProgressive" style="--h:0%"><span>Present Progressive</span></div>
+     <div class="bar" id="barPresentPerfect" style="--h:0%"><span>Present Perfect</span></div>
+     <div class="bar" id="barPastSimple" style="--h:0%"><span>Past Simple</span></div>
     </div>
    </div>
   </section>
@@ -228,6 +228,7 @@ const SUPABASE_ANON_KEY="sb_publishable_Kkdx7DW5GSRgYz9rfQ1Xig_MW4xkZ_f";
 const FALLBACK_TEST={id:1,title:"Grammar | Tenses الأزمنة",content:"Present Simple • Present Progressive • Present Perfect • Past Simple"};
 const FALLBACK_QUESTIONS=[{"id": 1, "question_text": "Sara usually ______ to school early.", "option_a": "come", "option_b": "comes", "option_c": "is coming", "option_d": "has come", "correct_answer": "B", "question_order": 1}, {"id": 2, "question_text": "Look! The students ______ for their English test now.", "option_a": "study", "option_b": "studied", "option_c": "are studying", "option_d": "have studied", "correct_answer": "C", "question_order": 2}, {"id": 3, "question_text": "We ______ in Jeddah since 2022.", "option_a": "live", "option_b": "lived", "option_c": "are living", "option_d": "have lived", "correct_answer": "D", "question_order": 3}, {"id": 4, "question_text": "My sister ______ her grandmother yesterday.", "option_a": "visits", "option_b": "visited", "option_c": "is visiting", "option_d": "has visited", "correct_answer": "B", "question_order": 4}, {"id": 5, "question_text": "Ahmed ______ coffee every morning before work.", "option_a": "drinks", "option_b": "drank", "option_c": "is drinking", "option_d": "has drunk", "correct_answer": "A", "question_order": 5}, {"id": 6, "question_text": "The teacher ______ the lesson at the moment.", "option_a": "explains", "option_b": "explained", "option_c": "is explaining", "option_d": "has explained", "correct_answer": "C", "question_order": 6}, {"id": 7, "question_text": "They ______ this movie three times so far.", "option_a": "watch", "option_b": "watched", "option_c": "are watching", "option_d": "have watched", "correct_answer": "D", "question_order": 7}, {"id": 8, "question_text": "I ______ my keys two hours ago.", "option_a": "lose", "option_b": "lost", "option_c": "am losing", "option_d": "have lost", "correct_answer": "B", "question_order": 8}, {"id": 9, "question_text": "Mona ______ her homework yet.", "option_a": "doesn't finish", "option_b": "didn't finish", "option_c": "isn't finishing", "option_d": "hasn't finished", "correct_answer": "D", "question_order": 9}, {"id": 10, "question_text": "My parents often ______ to the park on weekends.", "option_a": "go", "option_b": "went", "option_c": "are going", "option_d": "have gone", "correct_answer": "A", "question_order": 10}, {"id": 11, "question_text": "Ali ______ his homework every evening.", "option_a": "does", "option_b": "did", "option_c": "is doing", "option_d": "has done", "correct_answer": "A", "question_order": 11}, {"id": 12, "question_text": "Listen! Someone ______ at the door.", "option_a": "knocks", "option_b": "knocked", "option_c": "is knocking", "option_d": "has knocked", "correct_answer": "C", "question_order": 12}, {"id": 13, "question_text": "We ______ our project already.", "option_a": "finish", "option_b": "finished", "option_c": "are finishing", "option_d": "have finished", "correct_answer": "D", "question_order": 13}, {"id": 14, "question_text": "They ______ to Riyadh last weekend.", "option_a": "travel", "option_b": "traveled", "option_c": "are traveling", "option_d": "have traveled", "correct_answer": "B", "question_order": 14}, {"id": 15, "question_text": "My father always ______ the news after dinner.", "option_a": "watches", "option_b": "watched", "option_c": "is watching", "option_d": "has watched", "correct_answer": "A", "question_order": 15}, {"id": 16, "question_text": "Please be quiet. The baby ______ now.", "option_a": "sleeps", "option_b": "slept", "option_c": "is sleeping", "option_d": "has slept", "correct_answer": "C", "question_order": 16}, {"id": 17, "question_text": "She ______ English for five years.", "option_a": "studies", "option_b": "studied", "option_c": "is studying", "option_d": "has studied", "correct_answer": "D", "question_order": 17}, {"id": 18, "question_text": "I ______ that book last month.", "option_a": "read", "option_b": "bought", "option_c": "am reading", "option_d": "have read", "correct_answer": "A", "question_order": 18}, {"id": 19, "question_text": "He ______ his lunch yet.", "option_a": "doesn't eat", "option_b": "didn't eat", "option_c": "isn't eating", "option_d": "hasn't eaten", "correct_answer": "D", "question_order": 19}, {"id": 20, "question_text": "The students usually ______ their assignments on time.", "option_a": "submit", "option_b": "submitted", "option_c": "are submitting", "option_d": "have submitted", "correct_answer": "A", "question_order": 20}];
 const PENDING_KEY="stepup_pending_attempts_v1";
+const HISTORY_KEY="stepup_attempt_history_v1";
 let bank={test:null,questions:[],answers:{},offline:false};
 
 async function sb(path,opts={}){
@@ -246,6 +247,70 @@ async function sb(path,opts={}){
 const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 function getPending(){try{return JSON.parse(localStorage.getItem(PENDING_KEY)||"[]")}catch(e){return[]}}
 function setPending(v){localStorage.setItem(PENDING_KEY,JSON.stringify(v))}
+
+function getHistory(){
+  try{return JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]")}catch(e){return[]}
+}
+function setHistory(v){localStorage.setItem(HISTORY_KEY,JSON.stringify(v))}
+function saveLocalHistory(attempt,responses){
+  const h=getHistory();
+  h.push({...attempt,responses,saved_at:new Date().toISOString()});
+  setHistory(h);
+  refreshStats();
+}
+function topicForQuestion(id){
+  const n=Number(id);
+  if([1,5,10,11,15,20].includes(n)) return "Present Simple";
+  if([2,6,12,16].includes(n)) return "Present Progressive";
+  if([3,7,9,13,17,19].includes(n)) return "Present Perfect";
+  if([4,8,14,18].includes(n)) return "Past Simple";
+  return "";
+}
+function refreshStats(){
+  const h=getHistory();
+  const attempts=document.getElementById("kpiAttempts");
+  const average=document.getElementById("kpiAverage");
+  const highest=document.getElementById("kpiHighest");
+  const improvement=document.getElementById("kpiImprovement");
+  if(!attempts) return;
+
+  attempts.textContent=String(h.length);
+  if(!h.length){
+    average.textContent="0%";
+    highest.textContent="0%";
+    improvement.textContent="—";
+  }else{
+    const vals=h.map(x=>Number(x.percentage)||0);
+    average.textContent=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length)+"%";
+    highest.textContent=Math.max(...vals)+"%";
+    improvement.textContent=h.length<2 ? "—" : ((vals[vals.length-1]-vals[0])>=0?"+":"")+(vals[vals.length-1]-vals[0])+"%";
+  }
+
+  const topics=["Present Simple","Present Progressive","Present Perfect","Past Simple"];
+  const barIds={
+    "Present Simple":"barPresentSimple",
+    "Present Progressive":"barPresentProgressive",
+    "Present Perfect":"barPresentPerfect",
+    "Past Simple":"barPastSimple"
+  };
+  topics.forEach(topic=>{
+    let total=0, correct=0;
+    h.forEach(a=>{
+      (a.responses||[]).forEach(r=>{
+        if(topicForQuestion(r.question_id)===topic){
+          total++;
+          if(r.is_correct) correct++;
+        }
+      });
+    });
+    const pct=total?Math.round(correct/total*100):0;
+    const el=document.getElementById(barIds[topic]);
+    if(el){
+      el.style.setProperty("--h",pct+"%");
+      el.title=topic+" "+pct+"%";
+    }
+  });
+}
 
 async function syncPending(){
   const p=getPending(); if(!p.length) return;
@@ -412,7 +477,7 @@ async function submitBank(){
 document.getElementById("openBank").onclick=openBank;
 document.getElementById("closeBank").onclick=()=>document.getElementById("bankModal").classList.remove("open");
 document.getElementById("bankModal").addEventListener("click",e=>{if(e.target.id==="bankModal") e.currentTarget.classList.remove("open")});
-window.addEventListener("load",()=>syncPending().catch(()=>{}));
+window.addEventListener("load",()=>{refreshStats();syncPending().catch(()=>{})});
 window.addEventListener("online",()=>syncPending().catch(()=>{}));
 </script>
 
