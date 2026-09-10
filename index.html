@@ -267,23 +267,37 @@ function topicForQuestion(id){
   return "";
 }
 function refreshStats(){
-  const h=getHistory();
+  const history=getHistory();
+  const pending=getPending().map(x=>({
+    ...(x.attempt||{}),
+    responses:x.responses||[],
+    saved_at:x.saved_at
+  }));
+
+  // اجمع المحاولات المحفوظة محليًا والمحاولات المعلقة القديمة بدون تكرار
+  const merged=[];
+  const seen=new Set();
+  [...history,...pending].forEach(a=>{
+    const key=a.session_id || a.saved_at || JSON.stringify([a.score,a.percentage,a.saved_at]);
+    if(!seen.has(key)){ seen.add(key); merged.push(a); }
+  });
+
   const attempts=document.getElementById("kpiAttempts");
   const average=document.getElementById("kpiAverage");
   const highest=document.getElementById("kpiHighest");
   const improvement=document.getElementById("kpiImprovement");
   if(!attempts) return;
 
-  attempts.textContent=String(h.length);
-  if(!h.length){
+  attempts.textContent=String(merged.length);
+  if(!merged.length){
     average.textContent="0%";
     highest.textContent="0%";
     improvement.textContent="—";
   }else{
-    const vals=h.map(x=>Number(x.percentage)||0);
+    const vals=merged.map(x=>Number(x.percentage)||0);
     average.textContent=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length)+"%";
     highest.textContent=Math.max(...vals)+"%";
-    improvement.textContent=h.length<2 ? "—" : ((vals[vals.length-1]-vals[0])>=0?"+":"")+(vals[vals.length-1]-vals[0])+"%";
+    improvement.textContent=merged.length<2 ? "—" : ((vals[vals.length-1]-vals[0])>=0?"+":"")+(vals[vals.length-1]-vals[0])+"%";
   }
 
   const topics=["Present Simple","Present Progressive","Present Perfect","Past Simple"];
@@ -293,9 +307,10 @@ function refreshStats(){
     "Present Perfect":"barPresentPerfect",
     "Past Simple":"barPastSimple"
   };
+
   topics.forEach(topic=>{
     let total=0, correct=0;
-    h.forEach(a=>{
+    merged.forEach(a=>{
       (a.responses||[]).forEach(r=>{
         if(topicForQuestion(r.question_id)===topic){
           total++;
