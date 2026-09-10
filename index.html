@@ -308,10 +308,17 @@ async function submitBank(){
     savedOnline=false;
     const p=getPending(); p.push({attempt,responses,saved_at:new Date().toISOString()}); setPending(p);
   }
+  const wrong = qs.filter(q => bank.answers[q.id] !== q.correct_answer);
+  const review = wrong.length
+    ? '<div style="margin-top:20px;text-align:right"><div style="font-weight:800;margin-bottom:10px">مراجعة الإجابات غير الصحيحة</div>' +
+      wrong.map((q,idx)=>'<div style="padding:12px 0;border-top:1px solid #ddd"><div style="font-weight:700">'+(idx+1)+'. '+esc(q.question_text)+'</div><div style="margin-top:6px">إجابتك: <b>'+esc(bank.answers[q.id])+'</b></div><div>الإجابة الصحيحة: <b>'+esc(q.correct_answer)+'</b></div></div>').join('') +
+      '</div>'
+    : '<div style="margin-top:20px;font-weight:800;color:var(--teal)">جميع الإجابات صحيحة</div>';
   document.querySelector("#bankModal .bank-body").innerHTML=
   '<div style="text-align:center;padding:30px"><b>تم إنهاء الاختبار</b><div style="font-size:42px;color:var(--teal);margin:12px">'+score+'/'+qs.length+
   '</div><div style="font-size:18px;font-weight:800">'+percentage+'%</div><div style="margin-top:12px;font-size:12px">'+
-  (savedOnline?'تم حفظ النتيجة في قاعدة البيانات':'تم حفظ النتيجة مؤقتًا على هذا الجهاز وستتم مزامنتها تلقائيًا عند عودة الاتصال')+'</div></div>';
+  (savedOnline?'تم حفظ النتيجة في قاعدة البيانات':'تم حفظ النتيجة مؤقتًا على هذا الجهاز وستتم مزامنتها تلقائيًا عند عودة الاتصال')+
+  '</div>'+review+'</div>';
 }
 
 document.getElementById("openBank").onclick=openBank;
